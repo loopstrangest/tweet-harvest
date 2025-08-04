@@ -1,0 +1,122 @@
+COMMUNITY ARCHIVE API INSIGHTS FOR TWEET DISCOVERY WEB APP
+
+## OVERVIEW
+The Community Archive (www.community-archive.org) is an open-source project preserving Twitter subculture history as a public domain dataset. Uses Supabase database with REST API access.
+
+## KEY API CAPABILITIES
+
+### Core Endpoints
+- `/rest/v1/tweets` - Main tweet retrieval endpoint
+- `/rest/v1/account` - User account lookup by username
+- Supports standard REST operations with Supabase client
+
+### Query Parameters
+- `account_id` - Filter by specific user (use with account lookup)
+- `limit` - Control result count
+- `eq` - Equality filtering
+- Built-in pagination support
+
+### Data Access Methods
+1. Supabase REST API (recommended for web apps)
+2. Direct blob storage JSON files (bulk downloads)
+3. JavaScript Supabase client integration
+
+## TWEET METADATA FOR DISCOVERY
+
+### Engagement Metrics (Key for Finding Notable Tweets)
+- `favorite_count` - Like count (primary engagement indicator)
+- `retweet_count` - Retweet count (virality indicator)
+- Combined metrics can identify high-impact content
+
+### Content Analysis Fields
+- `full_text` - Complete tweet content
+- `lang` - Language detection
+- `entities` - Hashtags, mentions, URLs (structured data)
+- `in_reply_to_*` fields - Conversation threading
+- `source` - Platform/client used
+- `created_at` - Precise timestamps
+
+### Advanced Metadata
+- Edit history tracking
+- Community tweet classification
+- User interaction networks (followers/following)
+- Profile contextual information
+
+## STRATEGIES FOR FINDING INTERESTING TWEETS
+
+### High Engagement Discovery
+```
+Query tweets ordered by favorite_count + retweet_count DESC
+Filter by minimum thresholds (e.g., >100 likes)
+```
+
+### Conversation Starters
+```
+Find tweets with high reply counts
+Look for threads (replies to own tweets)
+```
+
+### Temporal Analysis
+```
+Identify tweets during specific time periods
+Find tweets that gained engagement over time
+```
+
+### Network Effects
+```
+Cross-reference high-engagement tweets with user follower counts
+Find tweets from accounts with interesting follower ratios
+```
+
+### Content Patterns
+```
+Filter by language for specific communities
+Analyze hashtag popularity and emergence
+Track URL sharing patterns
+```
+
+## TECHNICAL IMPLEMENTATION RECOMMENDATIONS
+
+### For Web App Development
+1. Use Supabase JavaScript client for real-time queries
+2. Implement pagination for large result sets
+3. Cache frequently accessed data (user lookups)
+4. Create composite indexes on engagement metrics
+
+### Query Optimization
+- Combine `account_id` filtering with engagement thresholds
+- Use limit + offset for pagination
+- Batch account lookups to reduce API calls
+
+### Discovery Algorithms
+1. **Engagement Score**: `(favorite_count * 1) + (retweet_count * 2)`
+2. **Velocity Score**: Engagement over time since creation
+3. **Network Amplification**: Engagement relative to follower count
+4. **Conversation Catalyst**: Reply-to-like ratio
+
+## ROADMAP FEATURES TO LEVERAGE
+- Semantic search embeddings (future)
+- User summary pages (interests, relationships)
+- Discourse mapping capabilities
+- Browser extension for real-time updates
+
+## PRIVACY & ETHICS
+- Data processed locally on user devices
+- Only essential information sent to servers
+- Public domain dataset - appropriate for analysis
+- No personal messages or sensitive data included
+
+## DEVELOPMENT NEXT STEPS
+1. Set up Supabase client connection
+2. Implement basic tweet retrieval with engagement filtering
+3. Create scoring algorithms for "interesting" content
+4. Build pagination and caching layers
+5. Add user interface for discovery and exploration
+
+## API LIMITATIONS TO CONSIDER
+- Read-only access (no write operations)
+- Rate limiting may apply (check Supabase limits)
+- Data freshness depends on archive update frequency
+- Limited to users who have contributed their data
+
+This archive provides an excellent foundation for building a tweet discovery app focused on finding historically significant and engaging content from Twitter's subcultural communities.

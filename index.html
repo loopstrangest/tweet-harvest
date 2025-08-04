@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tweet Harvest</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
+  </head>
+  <body>
+    <header class="header">
+      <div class="container">
+        <div class="logo">
+          <i class="fas fa-seedling"></i>
+          <h1>Tweet Harvest</h1>
+        </div>
+        <p class="tagline">
+          Discover the most engaging tweets from the
+          <a
+            href="https://www.community-archive.org"
+            target="_blank"
+            style="color: inherit; text-decoration: underline"
+            >Community Archive</a
+          >
+        </p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="search-section">
+        <div class="search-card">
+          <h2><i class="fas fa-search"></i> Find Account</h2>
+          <div class="search-form">
+            <div class="search-input-container">
+              <input
+                type="text"
+                id="usernameInput"
+                placeholder="Enter Twitter username"
+                class="search-input"
+                autocomplete="off"
+              />
+              <div id="searchDropdown" class="search-dropdown hidden">
+                <div class="dropdown-content"></div>
+              </div>
+            </div>
+            <button id="searchBtn" class="search-btn">
+              <i class="fas fa-search"></i> Search
+            </button>
+          </div>
+          <div id="accountInfo" class="account-info hidden"></div>
+        </div>
+      </section>
+
+      <section id="resultsSection" class="results-section hidden">
+        <div class="filters">
+          <h3><i class="fas fa-filter"></i> Results</h3>
+          <div class="filter-controls">
+            <label for="limitSelect">Show</label>
+            <select id="limitSelect" class="limit-select">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span>tweets</span>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="likes">
+            <i class="fas fa-heart"></i> Most Liked
+          </button>
+          <button class="tab-btn" data-tab="retweets">
+            <i class="fas fa-retweet"></i> Most Retweeted
+          </button>
+          <button class="tab-btn" data-tab="ratios">
+            <i class="fas fa-chart-line"></i> Likes/Retweets
+          </button>
+          <button class="tab-btn" data-tab="wordcloud">
+            <i class="fas fa-cloud"></i> Word Cloud
+          </button>
+        </div>
+
+        <div class="tab-content">
+          <div id="likes-content" class="tab-panel active">
+            <div id="likesResults" class="tweets-grid"></div>
+          </div>
+          <div id="retweets-content" class="tab-panel">
+            <div id="retweetsResults" class="tweets-grid"></div>
+          </div>
+          <div id="ratios-content" class="tab-panel">
+            <div class="ratio-section">
+              <h4><i class="fas fa-arrow-up"></i> Highest Likes/Retweets</h4>
+              <div id="highRatiosResults" class="tweets-grid"></div>
+            </div>
+            <div class="ratio-section">
+              <h4><i class="fas fa-arrow-down"></i> Lowest Likes/Retweets</h4>
+              <div id="lowRatiosResults" class="tweets-grid"></div>
+            </div>
+          </div>
+          <div id="wordcloud-content" class="tab-panel">
+            <div class="wordcloud-section">
+              <div class="wordcloud-controls">
+                <button id="generateWordCloud" class="wordcloud-btn">
+                  <i class="fas fa-sync"></i> Generate Word Cloud
+                </button>
+                <button id="exportWordCloud" class="wordcloud-btn" disabled>
+                  <i class="fas fa-download"></i> Export as PNG
+                </button>
+              </div>
+              <div id="wordCloudContainer" class="wordcloud-container">
+                <div class="wordcloud-placeholder" id="wordCloudPlaceholder">
+                  <i
+                    class="fas fa-cloud"
+                    style="
+                      font-size: 3rem;
+                      color: var(--spring-growth);
+                      margin-bottom: 1rem;
+                    "
+                  ></i>
+                  <p>Generate Word Cloud</p>
+                </div>
+                <div id="wordCloudProgress" class="wordcloud-progress hidden">
+                  <div class="progress-info">
+                    <span id="progressText">Loading tweets...</span>
+                    <span id="progressPercent">0%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="loadingSpinner" class="loading hidden">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Harvesting tweets...</p>
+      </div>
+
+      <div id="errorMessage" class="error-message hidden"></div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>
+          Powered by
+          <a
+            href="https://github.com/TheExGenesis/community-archive"
+            target="_blank"
+            >Community Archive</a
+          >
+        </p>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
