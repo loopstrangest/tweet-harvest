@@ -77,16 +77,19 @@
 
         <div class="tabs">
           <button class="tab-btn active" data-tab="likes">
-            <i class="fas fa-heart"></i> Most Liked
+            <i class="fas fa-heart"></i> Likes
           </button>
           <button class="tab-btn" data-tab="retweets">
-            <i class="fas fa-retweet"></i> Most Retweeted
+            <i class="fas fa-retweet"></i> Retweets
           </button>
           <button class="tab-btn" data-tab="ratios">
-            <i class="fas fa-chart-line"></i> Likes/Retweets
+            <i class="fas fa-chart-line"></i> Ratios
           </button>
           <button class="tab-btn" data-tab="wordcloud">
             <i class="fas fa-cloud"></i> Word Cloud
+          </button>
+          <button class="tab-btn" data-tab="chat">
+            <i class="fas fa-comments"></i> Chat
           </button>
         </div>
 
@@ -138,6 +141,78 @@
               </div>
             </div>
           </div>
+          <div id="chat-content" class="tab-panel">
+            <div class="chat-section">
+              <div class="chat-setup" id="chatSetup">
+                <div class="second-user-selection">
+                  <h4><i class="fas fa-user-plus"></i> Select Second User</h4>
+                  <div class="search-input-container">
+                    <input
+                      type="text"
+                      id="secondUserInput"
+                      placeholder="Enter username to chat with"
+                      class="search-input"
+                      autocomplete="off"
+                    />
+                    <div id="secondUserDropdown" class="search-dropdown hidden">
+                      <div class="dropdown-content"></div>
+                    </div>
+                  </div>
+                  <button id="loadChatBtn" class="search-btn" disabled>
+                    <i class="fas fa-comments"></i> Load Conversation
+                  </button>
+                </div>
+              </div>
+
+              <div class="chat-container hidden" id="chatContainer">
+                <div class="chat-header">
+                  <div
+                    class="chat-participants clickable"
+                    id="chatParticipants"
+                    title="Click to swap positions"
+                  >
+                    Loading...
+                  </div>
+                  <div class="chat-controls">
+                    <div class="chat-search">
+                      <input
+                        type="text"
+                        id="chatSearchInput"
+                        placeholder="Search chat..."
+                        class="chat-search-input"
+                      />
+                      <button id="chatSearchBtn" class="chat-search-btn">
+                        <i class="fas fa-search"></i>
+                      </button>
+                      <div
+                        class="search-navigation hidden"
+                        id="searchNavigation"
+                      >
+                        <button id="prevSearchResult" class="nav-btn">
+                          <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <span id="searchResultCounter">0/0</span>
+                        <button id="nextSearchResult" class="nav-btn">
+                          <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <button id="clearSearch" class="nav-btn">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="messages-container" id="messagesContainer">
+                  <div class="chat-loading hidden" id="chatLoading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading conversation...</p>
+                  </div>
+                  <div class="messages-list" id="messagesList"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -151,6 +226,32 @@
 
     <footer class="footer">
       <div class="container">
+        <div class="social-links">
+          <a
+            href="https://www.instagram.com/strangest.loop/"
+            target="_blank"
+            class="social-link"
+            title="Instagram"
+          >
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a
+            href="https://buymeacoffee.com/loopy"
+            target="_blank"
+            class="social-link"
+            title="Buy Me a Coffee"
+          >
+            <img src="buymeacoffee.png" alt="Buy Me a Coffee" />
+          </a>
+          <a
+            href="https://x.com/strangestloop"
+            target="_blank"
+            class="social-link"
+            title="Twitter"
+          >
+            <i class="fab fa-twitter"></i>
+          </a>
+        </div>
         <p>
           Powered by
           <a
@@ -162,6 +263,6 @@
       </div>
     </footer>
 
-    <script src="app.js"></script>
+    <script type="module" src="js/app.js"></script>
   </body>
 </html>
