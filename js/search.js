@@ -31,6 +31,10 @@ export class SearchManager {
         secondUserInput.addEventListener('keydown', (e) => this.handleSecondUserKeydown(e));
         secondUserInput.addEventListener('focus', (e) => this.handleSecondUserFocus(e));
         secondUserInput.addEventListener('blur', (e) => this.handleSecondUserBlur(e));
+        
+        // Reposition dropdown on scroll/resize if in chat section
+        window.addEventListener('scroll', () => this.repositionChatDropdown());
+        window.addEventListener('resize', () => this.repositionChatDropdown());
     }
 
     // Main search suggestion methods
@@ -347,8 +351,20 @@ export class SearchManager {
     }
 
     showSecondUserDropdown() {
-        document.getElementById('secondUserDropdown').classList.remove('hidden');
+        const dropdown = document.getElementById('secondUserDropdown');
+        const input = document.getElementById('secondUserInput');
+        
+        dropdown.classList.remove('hidden');
         this.currentSecondUserHighlight = -1;
+        
+        // Position the dropdown correctly when in chat section (using fixed position)
+        if (dropdown.classList.contains('search-dropdown') && 
+            input.closest('.chat-section')) {
+            const rect = input.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.width = rect.width + 'px';
+        }
     }
 
     hideSecondUserDropdown() {
@@ -377,5 +393,18 @@ export class SearchManager {
 
     onSecondUserSelected(account) {
         // To be implemented by main app
+    }
+
+    repositionChatDropdown() {
+        const dropdown = document.getElementById('secondUserDropdown');
+        const input = document.getElementById('secondUserInput');
+        
+        if (dropdown && !dropdown.classList.contains('hidden') && 
+            input.closest('.chat-section')) {
+            const rect = input.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.width = rect.width + 'px';
+        }
     }
 }

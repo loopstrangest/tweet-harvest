@@ -88,6 +88,9 @@
           <button class="tab-btn" data-tab="wordcloud">
             <i class="fas fa-cloud"></i> Word Cloud
           </button>
+          <button class="tab-btn" data-tab="emojis">
+            <i class="fas fa-smile"></i> Emojis
+          </button>
           <button class="tab-btn" data-tab="chat">
             <i class="fas fa-comments"></i> Chat
           </button>
@@ -136,6 +139,37 @@
                   <div class="progress-info">
                     <span id="progressText">Loading tweets...</span>
                     <span id="progressPercent">0%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="emojis-content" class="tab-panel">
+            <div class="emoji-section">
+              <div class="emoji-controls">
+                <button id="generateEmojiChart" class="emoji-btn">
+                  <i class="fas fa-sync"></i> Generate Emoji Chart
+                </button>
+                <button id="exportEmojiChart" class="emoji-btn" disabled>
+                  <i class="fas fa-download"></i> Export as PNG
+                </button>
+              </div>
+              <div id="emojiChartContainer" class="emoji-chart-container">
+                <div class="emoji-placeholder" id="emojiChartPlaceholder">
+                  <i
+                    class="fas fa-smile"
+                    style="
+                      font-size: 3rem;
+                      color: var(--spring-growth);
+                      margin-bottom: 1rem;
+                    "
+                  ></i>
+                  <p>Generate Emoji Chart</p>
+                </div>
+                <div id="emojiChartProgress" class="emoji-progress hidden">
+                  <div class="progress-info">
+                    <span id="emojiProgressText">Loading tweets...</span>
+                    <span id="emojiProgressPercent">0%</span>
                   </div>
                 </div>
               </div>

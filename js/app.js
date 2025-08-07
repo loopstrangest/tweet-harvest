@@ -1,6 +1,7 @@
 // Main application class
 import { CommunityArchiveAPI } from './api.js';
 import { WordCloudManager } from './wordcloud.js';
+import { EmojiManager } from './emojis.js';
 import { ChatManager } from './chat.js';
 import { SearchManager } from './search.js';
 
@@ -9,6 +10,7 @@ class TweetHarvest {
         // Initialize modules
         this.api = new CommunityArchiveAPI();
         this.wordCloud = new WordCloudManager(this.api);
+        this.emojis = new EmojiManager(this.api);
         this.chat = new ChatManager(this.api);
         this.search = new SearchManager(this.api);
         
@@ -56,6 +58,11 @@ class TweetHarvest {
         document.getElementById('wordCloudPlaceholder').addEventListener('click', () => 
             this.wordCloud.generateWordCloud(this.currentAccount));
 
+        // Emoji functionality
+        this.emojis.initializeEventListeners();
+        document.getElementById('emojiChartPlaceholder').addEventListener('click', () => 
+            this.emojis.generateEmojiChart());
+
         // Chat functionality
         this.chat.initializeEventListeners();
         document.getElementById('loadChatBtn').addEventListener('click', () => 
@@ -101,6 +108,9 @@ class TweetHarvest {
         // Clear word cloud
         this.wordCloud.clearWordCloud();
 
+        // Clear emoji chart
+        this.emojis.resetChart();
+
         // Clear chat history
         this.chat.clearChatHistory();
 
@@ -144,6 +154,10 @@ class TweetHarvest {
 
             // Auto-generate word cloud for the new user
             this.wordCloud.autoGenerateWordCloud(this.currentAccount);
+
+            // Set current account for emoji analysis and auto-generate
+            this.emojis.setCurrentAccount(this.currentAccount);
+            this.emojis.autoGenerateEmojiChart(this.currentAccount);
 
         } catch (error) {
             console.error('Search error:', error);
