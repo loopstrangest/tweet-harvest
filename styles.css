@@ -298,7 +298,7 @@ body {
 .tab-btn.active {
   background: var(--background-light);
   color: var(--rich-earth);
-  border-bottom-color: var(--deep-soil);
+  border-bottom-color: transparent;
 }
 
 .tab-btn i {
@@ -1392,7 +1392,7 @@ body {
 
 .search-example strong {
   color: var(--rich-earth);
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   background: rgba(112, 224, 0, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
@@ -1493,26 +1493,31 @@ body {
 }
 
 .emoji-progress .progress-info::before {
-  content: '🔄';
+  content: "🔄";
   font-size: 1.5rem;
   margin-right: 1rem;
   animation: spin 2s linear infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { 
-    transform: scale(1); 
-    opacity: 0.8; 
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
   }
-  50% { 
-    transform: scale(1.02); 
-    opacity: 1; 
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
   }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .emoji-chart {
@@ -1591,7 +1596,8 @@ body {
   font-size: 1.5rem;
   width: 30px;
   text-align: center;
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", "EmojiSymbols", sans-serif;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+    "Twemoji Mozilla", "Android Emoji", "EmojiSymbols", sans-serif;
   line-height: 1;
   display: inline-block;
 }
@@ -1614,26 +1620,39 @@ body {
 
 .bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--spring-growth), var(--growing-field));
+  background: linear-gradient(
+    90deg,
+    var(--spring-growth),
+    var(--growing-field)
+  );
   border-radius: 10px;
   transition: width 1s ease;
   position: relative;
 }
 
 .bar-fill::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   animation: shimmer 2s infinite;
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .emoji-empty,
@@ -1662,25 +1681,26 @@ body {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .emoji-info {
     min-width: 120px;
     gap: 0.5rem;
   }
-  
+
   .emoji-count {
     min-width: 60px;
     font-size: 0.8rem;
   }
-  
+
   .emoji-symbol {
     font-size: 1.3rem;
     width: 25px;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", "EmojiSymbols", sans-serif;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+      "Twemoji Mozilla", "Android Emoji", "EmojiSymbols", sans-serif;
     line-height: 1;
     display: inline-block;
   }
-  
+
   .bar-container {
     margin-left: 0.5rem;
   }
@@ -1690,20 +1710,21 @@ body {
   .emoji-info {
     min-width: 100px;
   }
-  
+
   .emoji-rank {
     width: 25px;
     font-size: 0.8rem;
   }
-  
+
   .emoji-symbol {
     font-size: 1.2rem;
     width: 20px;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", "EmojiSymbols", sans-serif;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+      "Twemoji Mozilla", "Android Emoji", "EmojiSymbols", sans-serif;
     line-height: 1;
     display: inline-block;
   }
-  
+
   .emoji-count {
     min-width: 50px;
     font-size: 0.75rem;
@@ -1774,7 +1795,7 @@ body {
     font-size: 14px;
     padding: 6px 10px;
   }
-  
+
   .tab-btn {
     min-width: calc(50% - 0.5rem);
     font-size: 0.85rem;

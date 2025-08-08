@@ -272,20 +272,28 @@ export class EmojiManager {
       progressPercent.textContent = `${Math.round(percent)}%`;
   }
 
-  exportChart() {
+  async exportChart() {
     if (this.emojiData.length === 0) return;
 
     try {
       const chartElement = document.querySelector(".emoji-chart");
       if (!chartElement) return;
 
-      // Create a canvas for export
+      // Calculate optimal canvas size based on content
+      const maxCount = Math.max(...this.emojiData.map((item) => item[1]));
+      const barHeight = 25;
+      const barSpacing = 35;
+      const startY = 120; // Increased to make room for URL
+      const maxBarWidth = 500;
+      const contentHeight = startY + this.emojiData.length * barSpacing + 20; // Add padding at bottom
+
+      // Create a canvas for export with precise sizing
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Set canvas size
+      // Set canvas size to fit content exactly
       canvas.width = 800;
-      canvas.height = Math.max(600, this.emojiData.length * 40 + 150);
+      canvas.height = contentHeight;
 
       // Fill background
       ctx.fillStyle = "#ffffff";
@@ -302,37 +310,35 @@ export class EmojiManager {
       );
 
       // Draw subtitle
-      ctx.fillStyle = "#666666";
+      ctx.fillStyle = "#2d5016";
       ctx.font = "16px Arial";
       ctx.fillText(
-        `Top ${this.emojiData.length} emojis from archived tweets`,
+        `Top ${this.emojiData.length} emojis from @${this.currentAccount.username}'s tweets`,
         canvas.width / 2,
         65
       );
 
-      // Draw bars
-      const maxCount = Math.max(...this.emojiData.map((item) => item[1]));
-      const barHeight = 25;
-      const barSpacing = 35;
-      const startY = 100;
-      const maxBarWidth = 500;
+      // Draw website URL prominently
+      ctx.fillStyle = "#2d5016";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("strangestloop.io/tweet-harvest", canvas.width / 2, 95);
 
-      this.emojiData.forEach((item, index) => {
-        const [emoji, count] = item;
+      // Draw bars
+      for (let index = 0; index < this.emojiData.length; index++) {
+        const [emoji, count] = this.emojiData[index];
         const y = startY + index * barSpacing;
         const barWidth = (count / maxCount) * maxBarWidth;
+        const barCenterY = y + 3 + barHeight / 2; // Center of the bar
 
         // Draw rank
-        ctx.fillStyle = "#666666";
+        ctx.fillStyle = "#2d5016";
         ctx.font = "bold 14px Arial";
         ctx.textAlign = "right";
-        ctx.fillText(`#${index + 1}`, 40, y + 17);
+        ctx.textBaseline = "middle";
+        ctx.fillText(`#${index + 1}`, 40, barCenterY);
 
-        // Draw emoji (simplified as text since canvas emoji support is limited)
-        ctx.fillStyle = "#000000";
-        ctx.font = "20px Arial";
-        ctx.textAlign = "left";
-        ctx.fillText(emoji, 50, y + 17);
+        // Draw emoji using a more reliable method - adjust Y position slightly down
+        await this.drawEmoji(ctx, emoji, 50, barCenterY + 2);
 
         // Draw bar background
         ctx.fillStyle = "#f0f0f0";
@@ -349,8 +355,9 @@ export class EmojiManager {
         ctx.fillStyle = "#2d5016";
         ctx.font = "bold 12px Arial";
         ctx.textAlign = "left";
-        ctx.fillText(`${count}`, 100 + barWidth, y + 17);
-      });
+        ctx.textBaseline = "middle";
+        ctx.fillText(`${count}`, 100 + barWidth, barCenterY);
+      }
 
       // Download the image
       const link = document.createElement("a");
@@ -360,6 +367,25 @@ export class EmojiManager {
     } catch (error) {
       console.error("Error exporting chart:", error);
       alert("Error exporting chart. Please try again.");
+    }
+  }
+
+  async drawEmoji(ctx, emoji, x, y) {
+    try {
+      // Use a comprehensive emoji font stack for better rendering
+      ctx.fillStyle = "#2d5016";
+      ctx.font =
+        "20px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Android Emoji', 'EmojiOne Color', 'Twemoji Mozilla', 'Segoe UI Symbol', Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(emoji, x, y);
+    } catch (error) {
+      // Fallback: just draw the emoji as text with basic font
+      ctx.fillStyle = "#2d5016";
+      ctx.font = "20px Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(emoji, x, y);
     }
   }
 
