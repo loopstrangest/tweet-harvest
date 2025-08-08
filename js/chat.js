@@ -90,7 +90,6 @@ export class ChatManager {
     }
 
     async fetchConversationData(userA, userB) {
-        console.log(`Fetching conversation between @${userA.username} and @${userB.username}`);
         
         const conversationTweets = [];
         const originalTweetsToFetch = new Set(); // Track original tweets we need to fetch
@@ -187,7 +186,6 @@ export class ChatManager {
             // Combine all conversation tweets
             conversationTweets.push(...bRepliesA, ...aRepliesB, ...aMentionsBFiltered, ...bMentionsAFiltered);
             
-            console.log(`Found ${originalTweetsToFetch.size} original tweets to fetch`);
             
             // Update loading message
             this.updateChatLoadingMessage(`Fetching ${originalTweetsToFetch.size} original tweets...`);
@@ -202,15 +200,6 @@ export class ChatManager {
             const uniqueTweets = conversationTweets.filter((tweet, index, self) => 
                 index === self.findIndex(t => t.tweet_id === tweet.tweet_id)
             );
-            
-            console.log(`Found ${uniqueTweets.length} total conversation tweets (including ${originalTweets.length} original tweets)`);
-            console.log('Conversation breakdown:', {
-                'B replies to A': bRepliesA.length,
-                'A replies to B': aRepliesB.length,  
-                'A mentions B': aMentionsBFiltered.length,
-                'B mentions A': bMentionsAFiltered.length,
-                'Original tweets': originalTweets.length
-            });
             
             // Update loading message
             this.updateChatLoadingMessage('Building conversation threads...');
@@ -229,7 +218,6 @@ export class ChatManager {
     async fetchOriginalTweets(tweetIds, userA, userB) {
         if (tweetIds.length === 0) return [];
         
-        console.log(`Fetching ${tweetIds.length} original tweets...`);
         
         const originalTweets = await this.api.fetchTweetsByIds(tweetIds);
         
@@ -252,12 +240,10 @@ export class ChatManager {
             }
         });
         
-        console.log(`Successfully fetched ${originalTweets.length} original tweets`);
         return originalTweets;
     }
 
     buildThreadedConversation(tweets) {
-        console.log('Building threaded conversation...');
         
         // Create maps for quick lookup
         const tweetMap = new Map();
@@ -343,13 +329,6 @@ export class ChatManager {
             if (!processedTweets.has(tweet.tweet_id)) {
                 addTweetWithReplies(tweet, 0);
             }
-        });
-        
-        console.log(`Threaded conversation: ${threadedResult.length} tweets organized into threads`);
-        console.log(`Thread structure:`, {
-            'Root tweets': rootTweets.length,
-            'Orphaned replies': orphanedReplies.length,
-            'Total replies': Array.from(repliesMap.values()).flat().length
         });
         
         return threadedResult;
@@ -532,6 +511,112 @@ export class ChatManager {
     }
 
     // Search functionality
+    matchesSearchQuery(text, query) {
+        const lowerText = text.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        
+        // Parse the query for different operators
+        const parts = [];
+        let currentPart = '';
+        let inQuotes = false;
+        let i = 0;
+        
+        while (i < query.length) {
+            const char = query[i];
+            
+            if (char === '"' && (i === 0 || query[i-1] === ' ')) {
+                // Start of quoted phrase
+                if (currentPart.trim()) {
+                    parts.push({ type: 'word', value: currentPart.trim() });
+                    currentPart = '';
+                }
+                inQuotes = true;
+                i++;
+                while (i < query.length && query[i] !== '"') {
+                    currentPart += query[i];
+                    i++;
+                }
+                if (i < query.length && query[i] === '"') {
+                    parts.push({ type: 'phrase', value: currentPart.trim() });
+                    currentPart = '';
+                    inQuotes = false;
+                    i++;
+                }
+            } else if (char === ' ') {
+                if (currentPart.trim()) {
+                    if (currentPart.trim().toLowerCase() === 'or') {
+                        parts.push({ type: 'operator', value: 'or' });
+                    } else {
+                        parts.push({ type: 'word', value: currentPart.trim() });
+                    }
+                    currentPart = '';
+                }
+                i++;
+            } else {
+                currentPart += char;
+                i++;
+            }
+        }
+        
+        // Add the last part
+        if (currentPart.trim()) {
+            if (currentPart.trim().toLowerCase() === 'or') {
+                parts.push({ type: 'operator', value: 'or' });
+            } else {
+                parts.push({ type: 'word', value: currentPart.trim() });
+            }
+        }
+        
+        // Now evaluate the parts
+        if (parts.length === 0) return false;
+        
+        // If there are no 'or' operators, all terms must be present (AND logic)
+        const hasOrOperator = parts.some(part => part.type === 'operator' && part.value === 'or');
+        
+        if (!hasOrOperator) {
+            // All words and phrases must be present
+            return parts.every(part => {
+                if (part.type === 'word') {
+                    return lowerText.includes(part.value.toLowerCase());
+                } else if (part.type === 'phrase') {
+                    return lowerText.includes(part.value.toLowerCase());
+                }
+                return true;
+            });
+        } else {
+            // Handle OR logic - split by 'or' and check if any group matches
+            const orGroups = [];
+            let currentGroup = [];
+            
+            parts.forEach(part => {
+                if (part.type === 'operator' && part.value === 'or') {
+                    if (currentGroup.length > 0) {
+                        orGroups.push(currentGroup);
+                        currentGroup = [];
+                    }
+                } else {
+                    currentGroup.push(part);
+                }
+            });
+            
+            if (currentGroup.length > 0) {
+                orGroups.push(currentGroup);
+            }
+            
+            // At least one group must match (all terms within a group must be present)
+            return orGroups.some(group => {
+                return group.every(part => {
+                    if (part.type === 'word') {
+                        return lowerText.includes(part.value.toLowerCase());
+                    } else if (part.type === 'phrase') {
+                        return lowerText.includes(part.value.toLowerCase());
+                    }
+                    return true;
+                });
+            });
+        }
+    }
+
     searchInConversation() {
         const searchInput = document.getElementById('chatSearchInput');
         const query = searchInput.value.trim();
@@ -541,10 +626,9 @@ export class ChatManager {
             return;
         }
         
-        console.log('Searching for:', query); // Debug log
         
-        // Clear previous search first
-        this.clearSearch();
+        // Clear previous search results (but keep input text)
+        this.clearSearchResults();
         
         // Find all messages containing the search term
         this.searchMatches = [];
@@ -553,10 +637,8 @@ export class ChatManager {
         messageElements.forEach((element, index) => {
             const messageContent = element.querySelector('.message-content');
             const text = messageContent.textContent.toLowerCase();
-            const searchTerm = query.toLowerCase();
             
-            if (text.includes(searchTerm)) {
-                console.log('Found match in:', text.substring(0, 50) + '...'); // Debug log
+            if (this.matchesSearchQuery(text, query)) {
                 this.searchMatches.push({
                     element,
                     index,
@@ -566,7 +648,6 @@ export class ChatManager {
             }
         });
         
-        console.log('Total matches found:', this.searchMatches.length); // Debug log
         
         if (this.searchMatches.length > 0) {
             this.highlightSearchResults(query);
@@ -582,7 +663,6 @@ export class ChatManager {
         const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`(${escapedQuery})`, 'gi');
         
-        console.log('Highlighting with regex:', regex); // Debug log
         
         this.searchMatches.forEach((match, index) => {
             const messageContent = match.element.querySelector('.message-content');
@@ -591,8 +671,6 @@ export class ChatManager {
             const currentClass = index === 0 ? 'current' : '';
             const highlightedHtml = match.originalHtml.replace(regex, `<span class="search-highlight ${currentClass}">$1</span>`);
             
-            console.log('Original:', match.originalHtml); // Debug log
-            console.log('Highlighted:', highlightedHtml); // Debug log
             
             messageContent.innerHTML = highlightedHtml;
         });
@@ -672,15 +750,8 @@ export class ChatManager {
         }, 3000);
     }
 
-    clearSearch() {
+    clearSearchResults() {
         const navigation = document.getElementById('searchNavigation');
-        
-        // Only clear input if called from clear button, not during new search
-        if (this.searchMatches.length === 0) {
-            const searchInput = document.getElementById('chatSearchInput');
-            searchInput.value = '';
-        }
-        
         navigation.classList.add('hidden');
         
         // Remove all search highlights
@@ -693,6 +764,12 @@ export class ChatManager {
         
         this.searchMatches = [];
         this.currentSearchIndex = -1;
+    }
+
+    clearSearch() {
+        const searchInput = document.getElementById('chatSearchInput');
+        searchInput.value = '';
+        this.clearSearchResults();
     }
 
     addMessageClickHandlers() {

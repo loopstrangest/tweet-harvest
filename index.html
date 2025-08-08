@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tweet Harvest</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://fabxmporizzqflnftavs.supabase.co; font-src 'self' https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>"
@@ -52,7 +53,8 @@
               </div>
             </div>
             <button id="searchBtn" class="search-btn">
-              <i class="fas fa-search"></i> Search
+              <i class="fas fa-seedling" style="margin-right: 0.5rem"></i
+              >Harvest
             </button>
           </div>
           <div id="accountInfo" class="account-info hidden"></div>
@@ -85,6 +87,9 @@
           <button class="tab-btn" data-tab="ratios">
             <i class="fas fa-chart-line"></i> Ratios
           </button>
+          <button class="tab-btn" data-tab="search">
+            <i class="fas fa-search"></i> Search
+          </button>
           <button class="tab-btn" data-tab="wordcloud">
             <i class="fas fa-cloud"></i> Word Cloud
           </button>
@@ -113,12 +118,84 @@
               <div id="lowRatiosResults" class="tweets-grid"></div>
             </div>
           </div>
+          <div id="search-content" class="tab-panel">
+            <div class="search-tweets-section">
+              <div class="search-controls">
+                <div class="search-input-wrapper">
+                  <input
+                    type="text"
+                    id="tweetSearchInput"
+                    placeholder="Search through all tweets..."
+                    class="tweet-search-input"
+                  />
+                  <button id="clearTweetSearch" class="clear-search-btn hidden">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="sort-controls">
+                  <button
+                    id="sortByLikes"
+                    class="sort-btn"
+                    data-sort="likes"
+                    data-direction="none"
+                  >
+                    <i class="fas fa-heart"></i> Likes
+                  </button>
+                  <button
+                    id="sortByRetweets"
+                    class="sort-btn"
+                    data-sort="retweets"
+                    data-direction="none"
+                  >
+                    <i class="fas fa-retweet"></i> Retweets
+                  </button>
+                  <button
+                    id="sortByDate"
+                    class="sort-btn"
+                    data-sort="date"
+                    data-direction="none"
+                  >
+                    <i class="fas fa-calendar"></i> Date
+                  </button>
+                  <button
+                    id="searchInfoBtn"
+                    class="info-btn"
+                    title="Search help"
+                  >
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="search-results">
+                <div id="searchResultsContainer" class="tweets-grid"></div>
+                <div id="searchLoadingPlaceholder" class="search-loading-placeholder">
+                  <i
+                    class="fas fa-spinner fa-spin"
+                    style="
+                      font-size: 3rem;
+                      color: var(--spring-growth);
+                      margin-bottom: 1rem;
+                    "
+                  ></i>
+                  <p>Loading tweets for search...</p>
+                </div>
+                <div id="searchNoResults" class="search-empty hidden">
+                  <i
+                    class="fas fa-search"
+                    style="
+                      font-size: 3rem;
+                      color: var(--border-light);
+                      margin-bottom: 1rem;
+                    "
+                  ></i>
+                  <p>No tweets found matching your search</p>
+                </div>
+              </div>
+            </div>
+          </div>
           <div id="wordcloud-content" class="tab-panel">
             <div class="wordcloud-section">
               <div class="wordcloud-controls">
-                <button id="generateWordCloud" class="wordcloud-btn">
-                  <i class="fas fa-sync"></i> Generate Word Cloud
-                </button>
                 <button id="exportWordCloud" class="wordcloud-btn" disabled>
                   <i class="fas fa-download"></i> Export as PNG
                 </button>
@@ -126,14 +203,14 @@
               <div id="wordCloudContainer" class="wordcloud-container">
                 <div class="wordcloud-placeholder" id="wordCloudPlaceholder">
                   <i
-                    class="fas fa-cloud"
+                    class="fas fa-spinner fa-spin"
                     style="
                       font-size: 3rem;
                       color: var(--spring-growth);
                       margin-bottom: 1rem;
                     "
                   ></i>
-                  <p>Generate Word Cloud</p>
+                  <p>Generating word cloud...</p>
                 </div>
                 <div id="wordCloudProgress" class="wordcloud-progress hidden">
                   <div class="progress-info">
@@ -147,9 +224,6 @@
           <div id="emojis-content" class="tab-panel">
             <div class="emoji-section">
               <div class="emoji-controls">
-                <button id="generateEmojiChart" class="emoji-btn">
-                  <i class="fas fa-sync"></i> Generate Emoji Chart
-                </button>
                 <button id="exportEmojiChart" class="emoji-btn" disabled>
                   <i class="fas fa-download"></i> Export as PNG
                 </button>
@@ -157,14 +231,14 @@
               <div id="emojiChartContainer" class="emoji-chart-container">
                 <div class="emoji-placeholder" id="emojiChartPlaceholder">
                   <i
-                    class="fas fa-smile"
+                    class="fas fa-spinner fa-spin"
                     style="
                       font-size: 3rem;
                       color: var(--spring-growth);
                       margin-bottom: 1rem;
                     "
                   ></i>
-                  <p>Generate Emoji Chart</p>
+                  <p>Generating emoji chart...</p>
                 </div>
                 <div id="emojiChartProgress" class="emoji-progress hidden">
                   <div class="progress-info">
@@ -287,7 +361,7 @@
           </a>
         </div>
         <p>
-          Powered by
+          Powered by the
           <a
             href="https://github.com/TheExGenesis/community-archive"
             target="_blank"
@@ -296,6 +370,29 @@
         </p>
       </div>
     </footer>
+
+    <!-- Search Help Popup -->
+    <div id="searchHelpOverlay" class="search-help-overlay hidden">
+      <div class="search-help-popup">
+        <h3><i class="fas fa-search"></i> Search Definitions</h3>
+        <div class="search-help-content">
+          <div class="search-example">
+            <strong>long game:</strong> "long" and "game"
+          </div>
+          <div class="search-example">
+            <strong>long or game:</strong> "long" and/or "game"
+          </div>
+          <div class="search-example">
+            <strong>"long game":</strong> the phrase "long game"
+          </div>
+          <div class="search-example">
+            <strong>playing or "long game":</strong> "playing" and/or the phrase
+            "long game"
+          </div>
+        </div>
+        <p class="search-help-note">Click anywhere to close</p>
+      </div>
+    </div>
 
     <script type="module" src="js/app.js"></script>
   </body>

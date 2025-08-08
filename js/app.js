@@ -1,18 +1,22 @@
 // Main application class
 import { CommunityArchiveAPI } from './api.js';
+import { TweetManager } from './tweet-manager.js';
 import { WordCloudManager } from './wordcloud.js';
 import { EmojiManager } from './emojis.js';
 import { ChatManager } from './chat.js';
 import { SearchManager } from './search.js';
+import { TweetSearchManager } from './tweet-search.js';
 
 class TweetHarvest {
     constructor() {
         // Initialize modules
         this.api = new CommunityArchiveAPI();
-        this.wordCloud = new WordCloudManager(this.api);
-        this.emojis = new EmojiManager(this.api);
+        this.tweetManager = new TweetManager(this.api);
+        this.wordCloud = new WordCloudManager(this.api, this.tweetManager);
+        this.emojis = new EmojiManager(this.api, this.tweetManager);
         this.chat = new ChatManager(this.api);
         this.search = new SearchManager(this.api);
+        this.tweetSearch = new TweetSearchManager(this.tweetManager, this);
         
         // Application state
         this.currentAccount = null;
@@ -51,17 +55,14 @@ class TweetHarvest {
         });
 
         // Word cloud functionality
-        document.getElementById('generateWordCloud').addEventListener('click', () => 
-            this.wordCloud.generateWordCloud(this.currentAccount));
         document.getElementById('exportWordCloud').addEventListener('click', () => 
             this.wordCloud.exportWordCloud(this.currentAccount));
-        document.getElementById('wordCloudPlaceholder').addEventListener('click', () => 
-            this.wordCloud.generateWordCloud(this.currentAccount));
 
         // Emoji functionality
         this.emojis.initializeEventListeners();
-        document.getElementById('emojiChartPlaceholder').addEventListener('click', () => 
-            this.emojis.generateEmojiChart());
+
+        // Tweet search functionality
+        this.tweetSearch.initializeEventListeners();
 
         // Chat functionality
         this.chat.initializeEventListeners();
@@ -111,6 +112,12 @@ class TweetHarvest {
         // Clear emoji chart
         this.emojis.resetChart();
 
+        // Clear tweet search
+        this.tweetSearch.resetSearch();
+
+        // Clear cached tweets
+        this.tweetManager.clearTweets();
+
         // Clear chat history
         this.chat.clearChatHistory();
 
@@ -152,6 +159,12 @@ class TweetHarvest {
             document.getElementById('resultsSection').classList.remove('hidden');
             this.showLoading(false);
 
+            // Show loading indicators on tabs while fetching tweets
+            this.showTabLoadingIndicators(['search', 'wordcloud', 'emojis']);
+
+            // Fetch all tweets once for word cloud, emojis, and search
+            await this.tweetManager.fetchAllTweets(this.currentAccount);
+
             // Auto-generate word cloud for the new user
             this.wordCloud.autoGenerateWordCloud(this.currentAccount);
 
@@ -159,8 +172,15 @@ class TweetHarvest {
             this.emojis.setCurrentAccount(this.currentAccount);
             this.emojis.autoGenerateEmojiChart(this.currentAccount);
 
+            // Update tweet search for new account
+            this.tweetSearch.onAccountChanged();
+
+            // Clear loading indicators from tabs
+            this.clearTabLoadingIndicators(['search', 'wordcloud', 'emojis']);
+
         } catch (error) {
             console.error('Search error:', error);
+            this.clearTabLoadingIndicators(['search', 'wordcloud', 'emojis']);
             this.showError(`Error searching for account: ${error.message}`);
         }
     }
@@ -172,8 +192,8 @@ class TweetHarvest {
         accountInfo.innerHTML = `
             <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                 <div>
-                    <strong>@${account.username}</strong>
-                    ${account.account_display_name ? `(${account.account_display_name})` : ''}
+                    <strong>@${this.escapeHtml(account.username)}</strong>
+                    ${account.account_display_name ? `(${this.escapeHtml(account.account_display_name)})` : ''}
                 </div>
                 <div style="display: flex; gap: 1rem; font-size: 0.9rem; color: var(--text-light);">
                     <span><i class="fas fa-users"></i> ${this.formatNumber(account.num_followers || 0)} followers</span>
@@ -193,14 +213,12 @@ class TweetHarvest {
             const likesData = await this.api.getTopTweets(
                 this.currentAccount.account_id, 'favorite_count', this.currentLimit
             ).catch(e => {
-                console.log('favorite_count failed:', e.message);
                 return [];
             });
             
             const retweetsData = await this.api.getTopTweets(
                 this.currentAccount.account_id, 'retweet_count', this.currentLimit
             ).catch(e => {
-                console.log('retweet_count failed:', e.message);
                 return [];
             });
 
@@ -378,12 +396,24 @@ class TweetHarvest {
         }
     }
 
+    escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     linkifyText(text) {
-        // Match URLs (including t.co links, http/https links)
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        // First escape HTML entities
+        const escapedText = this.escapeHtml(text);
         
-        return text.replace(urlRegex, (url) => {
-            return `<a href="${url}" target="_blank" onclick="event.stopPropagation()">${url}</a>`;
+        // Then safely linkify URLs
+        const urlRegex = /(https?:\/\/[^\s<>"]+)/g;
+        return escapedText.replace(urlRegex, (url) => {
+            const safeUrl = this.escapeHtml(url);
+            return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${safeUrl}</a>`;
         });
     }
 
@@ -435,6 +465,29 @@ class TweetHarvest {
             return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
         }
         return num?.toString() || '0';
+    }
+
+    showTabLoadingIndicators(tabNames) {
+        tabNames.forEach(tabName => {
+            const tabButton = document.querySelector(`[data-tab="${tabName}"] i`);
+            if (tabButton) {
+                // Store original icon class
+                tabButton.dataset.originalClass = tabButton.className;
+                // Set to spinner
+                tabButton.className = 'fas fa-spinner fa-spin';
+            }
+        });
+    }
+
+    clearTabLoadingIndicators(tabNames) {
+        tabNames.forEach(tabName => {
+            const tabButton = document.querySelector(`[data-tab="${tabName}"] i`);
+            if (tabButton && tabButton.dataset.originalClass) {
+                // Restore original icon
+                tabButton.className = tabButton.dataset.originalClass;
+                delete tabButton.dataset.originalClass;
+            }
+        });
     }
 }
 

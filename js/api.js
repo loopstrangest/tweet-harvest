@@ -14,7 +14,6 @@ export class CommunityArchiveAPI {
             }
         });
 
-        console.log('API URL:', url.toString()); // Debug log
 
         const response = await fetch(url, {
             method: 'GET',
@@ -28,7 +27,6 @@ export class CommunityArchiveAPI {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('API Error details:', errorText);
             throw new Error(`API Error: ${response.status} ${response.statusText}`);
         }
 

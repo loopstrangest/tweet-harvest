@@ -4,14 +4,15 @@
   "description": "A web app for discovering engaging tweets from the Community Archive",
   "main": "index.html",
   "scripts": {
-    "start": "npx http-server -p 8000 -o",
-    "dev": "npx http-server -p 8000 -o",
+    "start": "node server.js",
+    "dev": "node server.js",
     "serve": "npx http-server -p 8000 -o"
   },
   "keywords": ["twitter", "tweets", "community-archive", "analytics"],
   "author": "Tweet Harvest",
   "license": "MIT",
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "chokidar-cli": "^3.0.0"
   }
 }

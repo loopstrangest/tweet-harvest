@@ -9,6 +9,15 @@ export class SearchManager {
         this.secondUserSearchResults = [];
     }
 
+    escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     initializeEventListeners() {
         const input = document.getElementById('usernameInput');
         
@@ -51,10 +60,10 @@ export class SearchManager {
             return;
         }
 
-        // Debounce search by 250ms
+        // Debounce search by 150ms
         this.searchTimeout = setTimeout(() => {
             this.searchAccounts(query);
-        }, 250);
+        }, 150);
     }
 
     handleSearchKeydown(e) {
@@ -85,10 +94,13 @@ export class SearchManager {
         }
     }
 
-    handleSearchFocus(e) {
+    async handleSearchFocus(e) {
         const query = e.target.value.trim();
         if (query.length >= 1 && this.searchResults.length > 0) {
             this.showSearchDropdown();
+        } else if (query.length === 0) {
+            // Show all users by followers descending when clicking empty search bar
+            await this.loadAllUsers();
         }
     }
 
@@ -97,6 +109,23 @@ export class SearchManager {
         setTimeout(() => {
             this.hideSearchDropdown();
         }, 150);
+    }
+
+    async loadAllUsers() {
+        try {
+            // Get all users sorted by followers descending
+            const allUsers = await this.api.apiCall('account', {
+                'select': 'username,account_display_name,num_followers,num_tweets',
+                'order': 'num_followers.desc.nullslast',
+                'limit': '20' // Limit to top 20 users to keep it manageable
+            });
+            
+            this.searchResults = allUsers || [];
+            this.displaySearchResults();
+        } catch (error) {
+            console.error('Error loading all users:', error);
+            this.hideSearchDropdown();
+        }
     }
 
     async searchAccounts(query) {
@@ -120,14 +149,14 @@ export class SearchManager {
 
         content.innerHTML = this.searchResults.map((account, index) => {
             const displayName = account.account_display_name ? 
-                `(${account.account_display_name})` : '';
+                `(${this.escapeHtml(account.account_display_name)})` : '';
             const followers = this.formatNumber(account.num_followers || 0);
             const tweets = this.formatNumber(account.num_tweets || 0);
             
             return `
                 <div class="dropdown-item" data-index="${index}">
                     <div>
-                        <div class="account-username">@${account.username}</div>
+                        <div class="account-username">@${this.escapeHtml(account.username)}</div>
                         ${displayName ? `<div class="account-display-name">${displayName}</div>` : ''}
                     </div>
                     <div class="account-stats">
@@ -235,10 +264,13 @@ export class SearchManager {
         }
     }
 
-    handleSecondUserFocus(e) {
+    async handleSecondUserFocus(e) {
         const query = e.target.value.trim();
         if (query.length >= 1 && this.secondUserSearchResults && this.secondUserSearchResults.length > 0) {
             this.showSecondUserDropdown();
+        } else if (query.length === 0) {
+            // Show all users by followers descending when clicking empty search bar
+            await this.loadAllUsersForSecondUser();
         }
     }
 
@@ -246,6 +278,31 @@ export class SearchManager {
         setTimeout(() => {
             this.hideSecondUserDropdown();
         }, 150);
+    }
+
+    async loadAllUsersForSecondUser() {
+        try {
+            // Get all users sorted by followers descending, excluding current user if set
+            const excludeAccountId = this.getCurrentAccountId();
+            
+            const allUsers = await this.api.apiCall('account', {
+                'select': 'username,account_display_name,num_followers,num_tweets,account_id',
+                'order': 'num_followers.desc.nullslast',
+                'limit': '20' // Limit to top 20 users to keep it manageable
+            });
+            
+            // Filter out current user if we have one
+            let filteredUsers = allUsers || [];
+            if (excludeAccountId) {
+                filteredUsers = filteredUsers.filter(user => user.account_id !== excludeAccountId);
+            }
+            
+            this.secondUserSearchResults = filteredUsers;
+            this.displaySecondUserResults(this.secondUserSearchResults);
+        } catch (error) {
+            console.error('Error loading all users for second user:', error);
+            this.hideSecondUserDropdown();
+        }
     }
 
     async searchSecondUser(query, excludeAccountId = null) {
@@ -288,14 +345,14 @@ export class SearchManager {
 
         content.innerHTML = results.map((account, index) => {
             const displayName = account.account_display_name ? 
-                `(${account.account_display_name})` : '';
+                `(${this.escapeHtml(account.account_display_name)})` : '';
             const followers = this.formatNumber(account.num_followers || 0);
             const tweets = this.formatNumber(account.num_tweets || 0);
             
             return `
                 <div class="dropdown-item" data-index="${index}">
                     <div>
-                        <div class="account-username">@${account.username}</div>
+                        <div class="account-username">@${this.escapeHtml(account.username)}</div>
                         ${displayName ? `<div class="account-display-name">${displayName}</div>` : ''}
                     </div>
                     <div class="account-stats">
@@ -406,5 +463,13 @@ export class SearchManager {
             dropdown.style.left = rect.left + 'px';
             dropdown.style.width = rect.width + 'px';
         }
+    }
+
+    getCurrentAccountId() {
+        // Get current account ID from the main app if available
+        if (window.tweetHarvest && window.tweetHarvest.currentAccount) {
+            return window.tweetHarvest.currentAccount.account_id;
+        }
+        return null;
     }
 }
