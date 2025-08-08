@@ -6,9 +6,15 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "serve": "npx http-server -p 8000 -o"
+    "serve": "npx http-server -p 8000 -o",
+    "build": "echo 'Static app - no build process needed. Files are ready for deployment.'"
   },
-  "keywords": ["twitter", "tweets", "community-archive", "analytics"],
+  "keywords": [
+    "twitter",
+    "tweets",
+    "community-archive",
+    "analytics"
+  ],
   "author": "Tweet Harvest",
   "license": "MIT",
   "devDependencies": {
