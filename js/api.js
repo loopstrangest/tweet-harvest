@@ -65,7 +65,7 @@ export class CommunityArchiveAPI {
 
     async getAccount(username) {
         const accounts = await this.apiCall('account', {
-            'username': `eq.${username.toLowerCase()}`,
+            'username': `eq.${username}`,
             'limit': '1'
         });
 
