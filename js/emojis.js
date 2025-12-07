@@ -59,6 +59,10 @@ export class EmojiManager {
   }
 
   async fetchAllTweets() {
+    if (!this.currentAccount || !this.currentAccount.account_id) {
+      throw new Error('No current account set for fetching tweets');
+    }
+
     const tweets = [];
     const batchSize = 1000;
     let offset = 0;
@@ -124,6 +128,10 @@ export class EmojiManager {
   }
 
   displayEmojiChart(emojiData) {
+    if (!this.currentAccount || !this.currentAccount.username) {
+      return;
+    }
+    
     const container = document.getElementById("emojiChartContainer");
     const placeholder = document.getElementById("emojiChartPlaceholder");
 
@@ -196,24 +204,34 @@ export class EmojiManager {
     // Start automatic generation in the background
     if (account) {
       this.currentAccount = account; // Ensure current account is set
+      const accountIdAtSchedule = account.account_id;
       setTimeout(() => {
-        this.generateEmojiChart();
+        // Only generate if still the same account (user hasn't switched)
+        if (this.currentAccount && this.currentAccount.account_id === accountIdAtSchedule) {
+          this.generateEmojiChart();
+        }
       }, 2000); // Delay slightly to let other auto-generations run first
     }
   }
 
   resetChart() {
     const container = document.getElementById("emojiChartContainer");
-    const placeholder = document.getElementById("emojiChartPlaceholder");
     const exportButton = document.getElementById("exportEmojiChart");
 
-    // Reset container
-    if (container && placeholder) {
-      container.innerHTML = "";
-      if (placeholder) {
-        container.appendChild(placeholder);
-      }
-      placeholder.classList.remove("hidden");
+    // Reset container with placeholder
+    if (container) {
+      container.innerHTML = `
+        <div class="emoji-placeholder" id="emojiChartPlaceholder">
+          <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--spring-growth); margin-bottom: 1rem;"></i>
+          <p>Generating emoji chart...</p>
+        </div>
+        <div id="emojiChartProgress" class="emoji-progress hidden">
+          <div class="progress-info">
+            <span id="emojiProgressText">Loading tweets...</span>
+            <span id="emojiProgressPercent">0%</span>
+          </div>
+        </div>
+      `;
     }
 
     // Reset export button
@@ -222,7 +240,7 @@ export class EmojiManager {
     }
 
     this.emojiData = [];
-    this.hideProgress();
+    this.isGenerating = false;
   }
 
   showProgress() {
@@ -273,6 +291,7 @@ export class EmojiManager {
   }
 
   async exportChart() {
+    if (!this.currentAccount || !this.currentAccount.username) return;
     if (this.emojiData.length === 0) return;
 
     try {

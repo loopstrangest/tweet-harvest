@@ -22,7 +22,8 @@ class TweetHarvest {
         this.currentAccount = null;
         this.currentLimit = 10;
         this.isLoading = false;
-        
+        this.draftpoastsOnly = false;
+
         // Set up callbacks
         this.search.onAccountSelected = (username) => this.searchAccount(username);
         this.search.onSecondUserSelected = (account) => this.chat.secondAccount = account;
@@ -38,6 +39,14 @@ class TweetHarvest {
         // Limit selector
         document.getElementById('limitSelect').addEventListener('change', (e) => {
             this.currentLimit = parseInt(e.target.value);
+            if (this.currentAccount) {
+                this.loadAllTweetCategories();
+            }
+        });
+
+        // Draftpoasts toggle (Sunday filter for @strangestloop)
+        document.getElementById('draftpoastsToggle').addEventListener('change', (e) => {
+            this.draftpoastsOnly = e.target.checked;
             if (this.currentAccount) {
                 this.loadAllTweetCategories();
             }
@@ -153,9 +162,10 @@ class TweetHarvest {
             }
 
             this.currentAccount = account;
+            this.updateDraftpoastsToggleVisibility();
             this.displayAccountInfo();
             await this.loadAllTweetCategories();
-            
+
             document.getElementById('resultsSection').classList.remove('hidden');
             this.showLoading(false);
 
@@ -209,24 +219,39 @@ class TweetHarvest {
         if (!this.currentAccount) return;
 
         try {
-            // Load likes and retweets data
-            const likesData = await this.api.getTopTweets(
-                this.currentAccount.account_id, 'favorite_count', this.currentLimit
-            ).catch(e => {
-                return [];
-            });
-            
-            const retweetsData = await this.api.getTopTweets(
-                this.currentAccount.account_id, 'retweet_count', this.currentLimit
-            ).catch(e => {
-                return [];
-            });
+            let likesData, retweetsData;
+
+            if (this.draftpoastsOnly) {
+                // When filtering for Sundays, fetch more tweets and filter client-side
+                const fetchLimit = Math.max(500, this.currentLimit * 10);
+
+                const allLikesTweets = await this.api.getTopTweets(
+                    this.currentAccount.account_id, 'favorite_count', fetchLimit
+                ).catch(e => []);
+
+                const allRetweetsTweets = await this.api.getTopTweets(
+                    this.currentAccount.account_id, 'retweet_count', fetchLimit
+                ).catch(e => []);
+
+                // Filter for Sunday tweets and take the requested limit
+                likesData = this.filterSundayTweets(allLikesTweets).slice(0, this.currentLimit);
+                retweetsData = this.filterSundayTweets(allRetweetsTweets).slice(0, this.currentLimit);
+            } else {
+                // Normal behavior - fetch exact limit from API
+                likesData = await this.api.getTopTweets(
+                    this.currentAccount.account_id, 'favorite_count', this.currentLimit
+                ).catch(e => []);
+
+                retweetsData = await this.api.getTopTweets(
+                    this.currentAccount.account_id, 'retweet_count', this.currentLimit
+                ).catch(e => []);
+            }
 
             this.displayTweets('likesResults', likesData, 'favorite_count');
             this.displayTweets('retweetsResults', retweetsData, 'retweet_count');
 
             // Load ratio analysis (only if we have likes and retweets)
-            if (likesData.length > 0 && retweetsData.length > 0) {
+            if (likesData.length > 0 || retweetsData.length > 0) {
                 await this.loadRatioAnalysis();
             }
 
@@ -237,13 +262,18 @@ class TweetHarvest {
     }
 
     async loadRatioAnalysis() {
+        if (!this.currentAccount || !this.currentAccount.account_id) return;
+
         try {
             // Get all tweets with any engagement for comprehensive ratio analysis
             const tweets = await this.api.getAllTweets(this.currentAccount.account_id, 1000);
 
             if (tweets && tweets.length > 0) {
+                // Apply Sunday filter if enabled
+                const filteredTweets = this.filterSundayTweets(tweets);
+
                 // Calculate likes/retweets ratios only (both metrics must be > 0)
-                const tweetsWithRatios = tweets
+                const tweetsWithRatios = filteredTweets
                     .filter(tweet => {
                         const likes = tweet.favorite_count || 0;
                         const retweets = tweet.retweet_count || 0;
@@ -264,7 +294,7 @@ class TweetHarvest {
 
                 // Sort by ratio value and get highest/lowest
                 const sortedByRatio = [...tweetsWithRatios].sort((a, b) => b.ratioValue - a.ratioValue);
-                
+
                 const highestRatios = sortedByRatio.slice(0, this.currentLimit);
                 const lowestRatios = sortedByRatio.slice(-this.currentLimit).reverse();
 
@@ -278,12 +308,15 @@ class TweetHarvest {
 
     displayTweets(containerId, tweets, highlightMetric, ratioType = null) {
         const container = document.getElementById(containerId);
-        
+
         if (!tweets || tweets.length === 0) {
+            const emptyMessage = this.draftpoastsOnly
+                ? 'No Sunday tweets found with this criteria'
+                : 'No tweets found with this criteria';
             container.innerHTML = `
                 <div style="text-align: center; padding: 2rem; color: var(--text-light);">
                     <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; color: var(--border-light);"></i>
-                    <p>No tweets found with this criteria</p>
+                    <p>${emptyMessage}</p>
                 </div>
             `;
             return;
@@ -488,6 +521,46 @@ class TweetHarvest {
                 delete tabButton.dataset.originalClass;
             }
         });
+    }
+
+    // Check if a tweet was posted on Sunday in U.S. Central Time
+    isSundayInCentralTime(tweet) {
+        if (!tweet.created_at) return false;
+
+        // Parse the tweet's created_at timestamp
+        const tweetDate = new Date(tweet.created_at);
+
+        // Convert to Central Time using Intl.DateTimeFormat
+        // Central Time is America/Chicago
+        const centralTimeStr = tweetDate.toLocaleString('en-US', {
+            timeZone: 'America/Chicago',
+            weekday: 'long'
+        });
+
+        return centralTimeStr === 'Sunday';
+    }
+
+    // Filter tweets to only include those posted on Sundays (Central Time)
+    filterSundayTweets(tweets) {
+        if (!this.draftpoastsOnly) return tweets;
+        return tweets.filter(tweet => this.isSundayInCentralTime(tweet));
+    }
+
+    // Update visibility of Draftpoasts toggle based on current account
+    updateDraftpoastsToggleVisibility() {
+        const toggleContainer = document.getElementById('draftpoastsToggleContainer');
+        const toggle = document.getElementById('draftpoastsToggle');
+
+        if (this.currentAccount && this.currentAccount.username.toLowerCase() === 'strangestloop') {
+            toggleContainer.classList.remove('hidden');
+        } else {
+            toggleContainer.classList.add('hidden');
+            // Reset the toggle when switching away from strangestloop
+            if (toggle.checked) {
+                toggle.checked = false;
+                this.draftpoastsOnly = false;
+            }
+        }
     }
 }
 

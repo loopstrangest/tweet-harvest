@@ -9,6 +9,10 @@ export class TweetManager {
     }
 
     async fetchAllTweets(account, forceRefresh = false) {
+        if (!account || !account.account_id) {
+            throw new Error('Invalid account provided for fetching tweets');
+        }
+
         // Return cached tweets if available and not forcing refresh
         if (!forceRefresh && this.currentAccount?.account_id === account.account_id && this.allTweets.length > 0) {
             return this.allTweets;
@@ -22,8 +26,8 @@ export class TweetManager {
         // Start new fetch
         this.currentAccount = account;
         this.isLoading = true;
-        
-        this.loadingPromise = this._fetchTweetsInternal();
+
+        this.loadingPromise = this._fetchTweetsInternal(account);
         
         try {
             const tweets = await this.loadingPromise;
@@ -35,7 +39,11 @@ export class TweetManager {
         }
     }
 
-    async _fetchTweetsInternal() {
+    async _fetchTweetsInternal(account) {
+        if (!account || !account.account_id) {
+            throw new Error('No current account set for fetching tweets');
+        }
+
         const tweets = [];
         const batchSize = 1000;
         let offset = 0;
@@ -45,7 +53,7 @@ export class TweetManager {
         while (hasMore) {
             const batch = await this.api.apiCall('tweets', {
                 'select': '*',
-                'account_id': `eq.${this.currentAccount.account_id}`,
+                'account_id': `eq.${account.account_id}`,
                 'limit': batchSize.toString(),
                 'offset': offset.toString()
             });
@@ -237,6 +245,8 @@ export class TweetManager {
     clearTweets() {
         this.allTweets = [];
         this.currentAccount = null;
+        this.isLoading = false;
+        this.loadingPromise = null;
     }
 
     getCurrentAccount() {

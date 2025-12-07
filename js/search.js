@@ -467,7 +467,7 @@ export class SearchManager {
 
     getCurrentAccountId() {
         // Get current account ID from the main app if available
-        if (window.tweetHarvest && window.tweetHarvest.currentAccount) {
+        if (window.tweetHarvest && window.tweetHarvest.currentAccount && window.tweetHarvest.currentAccount.account_id) {
             return window.tweetHarvest.currentAccount.account_id;
         }
         return null;
